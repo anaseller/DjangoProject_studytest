@@ -9,23 +9,31 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+import os
+import environ
 
 from pathlib import Path
 
+env = environ.Env(
+    # Определяем типы и значения по умолчанию
+    DEBUG=(bool, False),
+    MYSQL=(bool, False),
+    ALLOWED_HOSTS=(list, []),
+)
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+environ.Env.read_env(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3h349t^4a+a)^$q&oqhl%uk0+=xb4my33b8@b3!lbxfkd0)adj'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG')
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
 
 # Application definition
@@ -41,6 +49,7 @@ INSTALLED_APPS = [
     # local
     'src.first_app.apps.FirstAppConfig',
     'src.library.apps.LibraryConfig',
+    'src.hello_app.apps.HelloAppConfig',
 ]
 
 MIDDLEWARE = [
@@ -79,12 +88,24 @@ WSGI_APPLICATION = 'DjangoProject_test.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if env('USE_REMOTE_DB', default='False') == 'True':
+    DATABASES = {
+        'default': {
+            'ENGINE': env('DB_ENGINE'),
+            'NAME': env('DB_NAME'),
+            'USER': env('DB_USER'),
+            'PASSWORD': env('DB_PASSWORD'),
+            'HOST': env('DB_HOST'),
+            'PORT': env('DB_PORT'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
